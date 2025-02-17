@@ -25,9 +25,16 @@ window.addEventListener('resize', resizeCanvas);
 let playerNumber = null;
 let paddles = { 1: { y: 200 }, 2: { y: 200 } };
 let ball = { x: 400, y: 200 };
+let scores = { 1: 0, 2: 0 };
+const GAME_WIDTH = 800;
+const GAME_HEIGHT = 400;
 
 socket.on('ballUpdate', (newBall) => {
     ball = newBall;
+});
+
+socket.on('updateScore', (newScores) => {
+    scores = newScores;
 });
 
 socket.on('playerNumber', (num) => {
@@ -66,6 +73,8 @@ socket.on('playerLeft', (id) => {
 });
 
 function draw() {
+    const scale = Math.min(canvas.width / GAME_WIDTH, canvas.height / GAME_HEIGHT);
+    
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -73,13 +82,26 @@ function draw() {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Set transform for game scaling
+    ctx.save();
+    ctx.translate((canvas.width - GAME_WIDTH * scale) / 2, (canvas.height - GAME_HEIGHT * scale) / 2);
+    ctx.scale(scale, scale);
+    
     // Draw center line
     ctx.setLineDash([5, 15]);
     ctx.beginPath();
-    ctx.moveTo(canvas.width / 2, 0);
-    ctx.lineTo(canvas.width / 2, canvas.height);
+    ctx.moveTo(GAME_WIDTH / 2, 0);
+    ctx.lineTo(GAME_WIDTH / 2, GAME_HEIGHT);
     ctx.strokeStyle = 'white';
     ctx.stroke();
+    
+    // Draw scores
+    ctx.setLineDash([]);
+    ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'white';
+    ctx.fillText(scores[1], GAME_WIDTH * 0.25, 60);
+    ctx.fillText(scores[2], GAME_WIDTH * 0.75, 60);
     
     // Draw ball
     ctx.fillStyle = 'white';
@@ -89,22 +111,26 @@ function draw() {
     
     // Draw paddles
     ctx.fillStyle = "white";
-    const paddleWidth = canvas.width * 0.02;
-    const paddleHeight = canvas.height * 0.15;
+    const paddleWidth = 20;
+    const paddleHeight = 60;
     
     // Left paddle (Player 1)
-    ctx.fillRect(paddleWidth, paddles[1]?.y || canvas.height/2, paddleWidth, paddleHeight);
+    ctx.fillRect(paddleWidth, paddles[1]?.y || GAME_HEIGHT/2, paddleWidth, paddleHeight);
     
     // Right paddle (Player 2)
-    ctx.fillRect(canvas.width - paddleWidth * 2, paddles[2]?.y || canvas.height/2, paddleWidth, paddleHeight);
+    ctx.fillRect(GAME_WIDTH - paddleWidth * 2, paddles[2]?.y || GAME_HEIGHT/2, paddleWidth, paddleHeight);
+    
+    ctx.restore();
 }
 
 function handleInput(y) {
     if (playerNumber) {
         const rect = canvas.getBoundingClientRect();
-        const canvasY = ((y - rect.top) / rect.height) * canvas.height;
-        const paddleHeight = canvas.height * 0.15;
-        const boundedY = Math.max(0, Math.min(canvas.height - paddleHeight, canvasY));
+        const scale = Math.min(canvas.width / GAME_WIDTH, canvas.height / GAME_HEIGHT);
+        const offsetY = (canvas.height - GAME_HEIGHT * scale) / 2;
+        const gameY = (y - rect.top - offsetY) / scale;
+        const paddleHeight = 60;
+        const boundedY = Math.max(0, Math.min(GAME_HEIGHT - paddleHeight, gameY));
         
         paddles[playerNumber].y = boundedY;
         socket.emit('updatePaddle', { y: boundedY });

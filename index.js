@@ -26,6 +26,11 @@ let ball = {
     speed: 5
 };
 
+let scores = {
+    1: 0,
+    2: 0
+};
+
 function updateBall() {
     if (playerCount === 2) {
         // Move ball
@@ -57,11 +62,20 @@ function updateBall() {
             }
         });
 
-        // Reset ball if it goes out
-        if (ball.x <= 0 || ball.x >= 800) {
+        // Score points and reset ball
+        if (ball.x <= 0) {
+            scores[2]++;
+            io.emit('updateScore', scores);
             ball.x = 400;
             ball.y = 200;
-            ball.dx = ball.speed * (Math.random() > 0.5 ? 1 : -1);
+            ball.dx = ball.speed;
+            ball.dy = ball.speed * (Math.random() > 0.5 ? 1 : -1);
+        } else if (ball.x >= 800) {
+            scores[1]++;
+            io.emit('updateScore', scores);
+            ball.x = 400;
+            ball.y = 200;
+            ball.dx = -ball.speed;
             ball.dy = ball.speed * (Math.random() > 0.5 ? 1 : -1);
         }
 
