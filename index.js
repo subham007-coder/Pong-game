@@ -1,7 +1,7 @@
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const os = require('os');
 
 const app = express();
 const server = http.createServer(app);
@@ -153,7 +153,23 @@ io.on('connection', (socket) => {
     });
 });
 
+function getLocalIpAddress() {
+    const interfaces = os.networkInterfaces();
+    for (const iface of Object.values(interfaces)) {
+        for (const alias of iface) {
+            if (alias.family === 'IPv4' && !alias.internal) {
+                return alias.address;
+            }
+        }
+    }
+    return '127.0.0.1';
+}
+
 server.listen(3000, '0.0.0.0', () => {
+    const ipAddress = getLocalIpAddress();
+    const url = `http://${ipAddress}:3000`;
     console.log('Pong game server is running!');
-    console.log('Open the game using the URL shown in the webview.');
+    console.log(`Open the game at: ${url}`);
+    // On Windows, the following creates a clickable link in most terminals
+    console.log(`\x1b]8;;${url}\x07Click here to open game\x1b]8;;\x07`);
 });
