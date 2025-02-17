@@ -21,11 +21,12 @@ localPort = 3000
 externalPort = 80
 
 [workflows]
-runButton = "Start Server"
+runButton = "Run"
 
 [[workflows.workflow]]
-name = "Start Server"
+name = "Run"
 author = 32869322
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
