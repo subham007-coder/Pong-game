@@ -147,4 +147,7 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(3000, '0.0.0.0', () => console.log('Pong game server is running! Open the game in your browser.'));
+server.listen(3000, '0.0.0.0', () => {
+    console.log('Pong game server is running!');
+    console.log('Open the game using the URL shown in the webview.');
+});
