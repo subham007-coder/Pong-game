@@ -36,17 +36,33 @@ function draw() {
     ctx.fillRect(770, paddles[2]?.y || 200, 10, 60);
 }
 
-canvas.addEventListener('mousemove', (event) => {
+function handleInput(y) {
     if (playerNumber) {
         const rect = canvas.getBoundingClientRect();
-        const y = event.clientY - rect.top - 30;
+        const canvasY = (y - rect.top) * (canvas.height / rect.height) - 30;
         
         // Keep paddle within canvas bounds
-        const boundedY = Math.max(0, Math.min(canvas.height - 60, y));
+        const boundedY = Math.max(0, Math.min(canvas.height - 60, canvasY));
         
         paddles[playerNumber].y = boundedY;
         socket.emit('updatePaddle', { y: boundedY });
     }
+}
+
+// Handle both mouse and touch events
+canvas.addEventListener('mousemove', (event) => {
+    handleInput(event.clientY);
+});
+
+canvas.addEventListener('touchmove', (event) => {
+    event.preventDefault();
+    const touch = event.touches[0];
+    handleInput(touch.clientY);
+});
+
+// Prevent default touch behavior
+canvas.addEventListener('touchstart', (event) => {
+    event.preventDefault();
 });
 
 function gameLoop() {
