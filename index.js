@@ -62,15 +62,15 @@ function updateBall() {
             }
         });
 
-        // Score points and reset ball
-        if (ball.x <= 0) {
+        // Score points only when ball passes completely behind paddles
+        if (ball.x < -10) {  // Ball passes left boundary completely
             scores[2]++;
             io.emit('updateScore', scores);
             ball.x = 400;
             ball.y = 200;
             ball.dx = ball.speed;
             ball.dy = ball.speed * (Math.random() > 0.5 ? 1 : -1);
-        } else if (ball.x >= 800) {
+        } else if (ball.x > 810) {  // Ball passes right boundary completely
             scores[1]++;
             io.emit('updateScore', scores);
             ball.x = 400;
