@@ -1,56 +1,57 @@
 
+const socket = io();
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const socket = io();
 
-let playerNumber;
-let players = {};
-
-const paddleWidth = 10;
-const paddleHeight = 60;
+let playerNumber = null;
+let paddles = { 1: { y: 200 }, 2: { y: 200 } };
 
 socket.on('playerNumber', (num) => {
     playerNumber = num;
-    console.log('You are player', playerNumber + 1);
-});
-
-socket.on('roomFull', () => {
-    alert('Game room is full!');
+    console.log('You are player', playerNumber);
 });
 
 socket.on('updatePaddle', (data) => {
-    if (players[data.id]) {
-        players[data.id].y = data.y;
-    }
+    paddles[data.id] = { y: data.y };
 });
 
 socket.on('playerLeft', (id) => {
-    delete players[id];
-});
-
-canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const y = e.clientY - rect.top - paddleHeight / 2;
-    
-    socket.emit('updatePaddle', { y: y });
-    if (playerNumber === 0) {
-        players[socket.id] = { y: y };
-    } else if (playerNumber === 1) {
-        players[socket.id] = { y: y };
-    }
+    paddles[id] = { y: 200 };
 });
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw paddles
-    Object.keys(players).forEach((id, index) => {
-        ctx.fillStyle = 'white';
-        const x = index === 0 ? 0 : canvas.width - paddleWidth;
-        ctx.fillRect(x, players[id].y, paddleWidth, paddleHeight);
-    });
+    // Draw center line
+    ctx.setLineDash([5, 15]);
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, 0);
+    ctx.lineTo(canvas.width / 2, canvas.height);
+    ctx.strokeStyle = 'white';
+    ctx.stroke();
     
-    requestAnimationFrame(draw);
+    // Draw paddles
+    ctx.fillStyle = "white";
+    ctx.fillRect(20, paddles[1]?.y || 200, 10, 60);
+    ctx.fillRect(770, paddles[2]?.y || 200, 10, 60);
 }
 
-draw();
+canvas.addEventListener('mousemove', (event) => {
+    if (playerNumber) {
+        const rect = canvas.getBoundingClientRect();
+        const y = event.clientY - rect.top - 30;
+        
+        // Keep paddle within canvas bounds
+        const boundedY = Math.max(0, Math.min(canvas.height - 60, y));
+        
+        paddles[playerNumber].y = boundedY;
+        socket.emit('updatePaddle', { y: boundedY });
+    }
+});
+
+function gameLoop() {
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
