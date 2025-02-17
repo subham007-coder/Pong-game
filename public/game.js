@@ -24,6 +24,11 @@ window.addEventListener('resize', resizeCanvas);
 
 let playerNumber = null;
 let paddles = { 1: { y: 200 }, 2: { y: 200 } };
+let ball = { x: 400, y: 200 };
+
+socket.on('ballUpdate', (newBall) => {
+    ball = newBall;
+});
 
 socket.on('playerNumber', (num) => {
     playerNumber = num;
@@ -39,7 +44,12 @@ socket.on('playerLeft', (id) => {
 });
 
 function draw() {
+    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw background
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Draw center line
     ctx.setLineDash([5, 15]);
@@ -48,6 +58,12 @@ function draw() {
     ctx.lineTo(canvas.width / 2, canvas.height);
     ctx.strokeStyle = 'white';
     ctx.stroke();
+    
+    // Draw ball
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, 10, 0, Math.PI * 2);
+    ctx.fill();
     
     // Draw paddles
     ctx.fillStyle = "white";

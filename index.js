@@ -7,13 +7,21 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static(__dirname + '/public')); // Serve frontend files with absolute path
+// Serve static files
+app.use(express.static(__dirname + '/public'));
 
-app.get('/', (req, res) => {
+// Serve index.html for all routes to handle client-side routing
+app.get('*', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
 let players = {};
+let ball = {
+    x: 400,
+    y: 200,
+    dx: 5,
+    dy: 5
+};
 
 io.on('connection', (socket) => {
     console.log('A player connected:', socket.id);
