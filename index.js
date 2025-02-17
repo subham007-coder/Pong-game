@@ -38,7 +38,8 @@ let ball = {
     dx: 7,
     dy: 7,
     speed: 7,
-    radius: 10
+    radius: 10,
+    active: false // Add active state
 };
 
 let scores = {
@@ -47,7 +48,7 @@ let scores = {
 };
 
 function updateBall() {
-    if (playerCount === 2) {
+    if (playerCount === 2 && ball.active) {  // Check if ball is active
         // Move ball
         ball.x += ball.dx;
         ball.y += ball.dy;
@@ -118,7 +119,11 @@ io.on('connection', (socket) => {
     playerNumbers.add(playerNumber);
     playerCount++;
     
-    players.set(socket.id, { y: 200, playerNumber });
+    players.set(socket.id, { 
+        y: 200, 
+        playerNumber,
+        username: `Player ${playerNumber}` // Default username
+    });
     
     // Emit player number and current game state
     socket.emit('playerNumber', playerNumber);
@@ -127,7 +132,11 @@ io.on('connection', (socket) => {
     console.log(`Assigned player ${playerNumber} to ${socket.id}`);
     
     if (playerCount === 2) {
+        ball.active = true;
+        ball.dx = ball.speed * (Math.random() > 0.5 ? 1 : -1);
+        ball.dy = ball.speed * (Math.random() > 0.5 ? 1 : -1);
         io.emit('gameStart');
+        io.emit('ballUpdate', ball);
     }
 
     socket.on('updatePaddle', (data) => {
@@ -141,6 +150,24 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('setUsername', ({ username }) => {
+        const player = players.get(socket.id);
+        if (player) {
+            player.username = username;
+        }
+    });
+
+    socket.on('chatMessage', (data) => {
+        const player = players.get(socket.id);
+        if (player) {
+            io.emit('chatMessage', {
+                message: data.message,
+                username: player.username || `Player ${player.playerNumber}`,
+                player: player.playerNumber
+            });
+        }
+    });
+
     socket.on('disconnect', () => {
         if (players.has(socket.id)) {
             const player = players.get(socket.id);
@@ -148,6 +175,18 @@ io.on('connection', (socket) => {
             playerCount--;
             players.delete(socket.id);
             io.emit('playerLeft', player.playerNumber);
+            
+            // Reset game state
+            ball.active = false; // Deactivate ball when player leaves
+            ball.x = 400;
+            ball.y = 200;
+            scores = { 1: 0, 2: 0 };
+            io.emit('resetGame', {
+                ball,
+                scores,
+                playerCount
+            });
+            
             console.log('Player', player.playerNumber, 'disconnected:', socket.id);
         }
     });

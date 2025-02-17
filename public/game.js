@@ -1,5 +1,5 @@
-
 const socket = io();
+let username = '';
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const playerInfo = document.getElementById('playerInfo');
@@ -29,6 +29,12 @@ let scores = { 1: 0, 2: 0 };
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 400;
 
+function promptUsername() {
+    const name = prompt('Enter your username:') || '';
+    username = name.trim() || `Player ${playerNumber}`;
+    socket.emit('setUsername', { username });
+}
+
 socket.on('ballUpdate', (newBall) => {
     ball = newBall;
 });
@@ -40,6 +46,7 @@ socket.on('updateScore', (newScores) => {
 socket.on('playerNumber', (num) => {
     playerNumber = num;
     playerInfo.textContent = `You are Player ${playerNumber}. Waiting for opponent...`;
+    promptUsername();
 });
 
 socket.on('playerCount', (count) => {
@@ -56,8 +63,14 @@ socket.on('roomFull', () => {
     playerInfo.textContent = 'Game room is full! Please try again later.';
 });
 
+// Update connect handler
 socket.on('connect', () => {
     playerInfo.textContent = 'Connected! Waiting for game assignment...';
+    // Reset local game state
+    scores = { 1: 0, 2: 0 };
+    ball = { x: 400, y: 200 };
+    paddles = { 1: { y: 200 }, 2: { y: 200 } };
+    playerNumber = null;
 });
 
 socket.on('disconnect', () => {
@@ -70,6 +83,53 @@ socket.on('updatePaddle', (data) => {
 
 socket.on('playerLeft', (id) => {
     paddles[id] = { y: canvas.height / 2 };
+});
+
+// Add after existing socket events
+
+const chatForm = document.getElementById('chatForm');
+const messageInput = document.getElementById('messageInput');
+const messagesDiv = document.getElementById('messages');
+
+// Handle receiving messages
+socket.on('chatMessage', (data) => {
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message');
+    
+    // Add player-specific class
+    messageElement.classList.add(`player${data.player}`);
+    
+    messageElement.textContent = `${data.username}: ${data.message}`;
+    messagesDiv.appendChild(messageElement);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+});
+
+// Add disconnect message handling
+socket.on('playerLeft', (playerNum) => {
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('system-message');
+    messageElement.textContent = `Player ${playerNum} left the game`;
+    messagesDiv.appendChild(messageElement);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+});
+
+// Handle sending messages
+chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const message = messageInput.value.trim();
+    if (message) {
+        socket.emit('chatMessage', { message });
+        messageInput.value = '';
+    }
+});
+
+// Add new socket event listener
+socket.on('resetGame', (data) => {
+    ball = data.ball;
+    scores = data.scores;
+    if (data.playerCount < 2) {
+        playerInfo.textContent = `Waiting for opponent...`;
+    }
 });
 
 function draw() {

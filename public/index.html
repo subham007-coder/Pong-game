@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,12 +30,86 @@
             color: white;
             font-family: Arial, sans-serif;
         }
+        
+        #chatBox {
+            position: fixed;
+            right: 10px;
+            bottom: 10px;
+            width: 250px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #fff;
+            color: white;
+            padding: 10px;
+        }
+        
+        #messages {
+            height: 150px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+        
+        #chatForm {
+            display: flex;
+            gap: 5px;
+        }
+        
+        #messageInput {
+            flex: 1;
+            padding: 5px;
+            background: #333;
+            border: 1px solid #fff;
+            color: white;
+        }
+        
+        #sendButton {
+            padding: 5px 10px;
+            background: #444;
+            border: 1px solid #fff;
+            color: white;
+            cursor: pointer;
+        }
+
+        #messages .message {
+            margin: 5px 0;
+            padding: 5px 10px;
+            border-radius: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        
+        #messages .message.player1 {
+            background: #2c3e50;
+            margin-right: auto;
+            text-align: left;
+        }
+        
+        #messages .message.player2 {
+            background: #34495e;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        #messages .system-message {
+            text-align: center;
+            color: #95a5a6;
+            font-style: italic;
+            margin: 5px 0;
+        }
     </style>
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
     <div id="playerInfo">Connecting...</div>
     <canvas id="gameCanvas"></canvas>
+    <div id="chatBox">
+        <div id="messages"></div>
+        <form id="chatForm">
+            <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
+            <button type="submit" id="sendButton">Send</button>
+        </form>
+    </div>
     <script src="game.js"></script>
 </body>
 </html>
