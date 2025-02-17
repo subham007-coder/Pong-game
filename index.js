@@ -22,8 +22,56 @@ let ball = {
     x: 400,
     y: 200,
     dx: 5,
-    dy: 5
+    dy: 5,
+    speed: 5
 };
+
+function updateBall() {
+    if (playerCount === 2) {
+        // Move ball
+        ball.x += ball.dx;
+        ball.y += ball.dy;
+
+        // Ball collision with top and bottom
+        if (ball.y <= 0 || ball.y >= 400) {
+            ball.dy *= -1;
+        }
+
+        // Ball collision with paddles
+        players.forEach((player, id) => {
+            const paddleWidth = 20;
+            const paddleHeight = 60;
+            
+            if (player.playerNumber === 1 && ball.x <= paddleWidth * 2) {
+                if (ball.y >= player.y && ball.y <= player.y + paddleHeight) {
+                    ball.dx *= -1;
+                    ball.x = paddleWidth * 2;
+                }
+            }
+            
+            if (player.playerNumber === 2 && ball.x >= 780) {
+                if (ball.y >= player.y && ball.y <= player.y + paddleHeight) {
+                    ball.dx *= -1;
+                    ball.x = 780;
+                }
+            }
+        });
+
+        // Reset ball if it goes out
+        if (ball.x <= 0 || ball.x >= 800) {
+            ball.x = 400;
+            ball.y = 200;
+            ball.dx = ball.speed * (Math.random() > 0.5 ? 1 : -1);
+            ball.dy = ball.speed * (Math.random() > 0.5 ? 1 : -1);
+        }
+
+        // Broadcast ball position
+        io.emit('ballUpdate', ball);
+    }
+}
+
+// Start game loop
+setInterval(updateBall, 1000/60);
 
 io.on('connection', (socket) => {
     console.log('A player connected:', socket.id);

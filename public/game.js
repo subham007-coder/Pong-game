@@ -58,7 +58,7 @@ socket.on('disconnect', () => {
 });
 
 socket.on('updatePaddle', (data) => {
-    paddles[data.id] = { y: data.y };
+    paddles[data.playerNumber] = { y: data.y };
 });
 
 socket.on('playerLeft', (id) => {
