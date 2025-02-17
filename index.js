@@ -165,11 +165,12 @@ function getLocalIpAddress() {
     return '127.0.0.1';
 }
 
-server.listen(3000, '0.0.0.0', () => {
-    const ipAddress = getLocalIpAddress();
-    const url = `http://${ipAddress}:3000`;
-    console.log('Pong game server is running!');
-    console.log(`Open the game at: ${url}`);
-    // On Windows, the following creates a clickable link in most terminals
-    console.log(`\x1b]8;;${url}\x07Click here to open game\x1b]8;;\x07`);
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Local: http://localhost:${PORT}`);
+    if (process.env.RENDER) {
+        console.log(`Production: https://your-app-name.onrender.com`);
+    }
 });
