@@ -15,8 +15,9 @@ app.get('*', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
-let players = {};
+let players = new Map();
 let playerCount = 0;
+let playerNumbers = new Set();
 let ball = {
     x: 400,
     y: 200,
@@ -28,10 +29,17 @@ io.on('connection', (socket) => {
     console.log('A player connected:', socket.id);
 
     if (playerCount < 2) {
+        let playerNumber = 1;
+        if (playerNumbers.has(1)) {
+            playerNumber = 2;
+        }
+        playerNumbers.add(playerNumber);
         playerCount++;
-        const playerNumber = playerCount;
-        players[socket.id] = { y: 200, playerNumber };
+        
+        players.set(socket.id, { y: 200, playerNumber });
         socket.emit('playerNumber', playerNumber);
+        
+        console.log(`Assigned player ${playerNumber} to ${socket.id}`);
         
         if (playerCount === 2) {
             io.emit('gameStart');
@@ -41,16 +49,24 @@ io.on('connection', (socket) => {
     }
 
     socket.on('updatePaddle', (data) => {
-        players[socket.id].y = data.y;
-        socket.broadcast.emit('updatePaddle', { id: socket.id, y: data.y });
+        const player = players.get(socket.id);
+        if (player) {
+            player.y = data.y;
+            socket.broadcast.emit('updatePaddle', { 
+                playerNumber: player.playerNumber,
+                y: data.y 
+            });
+        }
     });
 
     socket.on('disconnect', () => {
-        if (players[socket.id]) {
+        if (players.has(socket.id)) {
+            const player = players.get(socket.id);
+            playerNumbers.delete(player.playerNumber);
             playerCount--;
-            delete players[socket.id];
-            io.emit('playerLeft', socket.id);
-            console.log('A player disconnected:', socket.id);
+            players.delete(socket.id);
+            io.emit('playerLeft', player.playerNumber);
+            console.log('Player', player.playerNumber, 'disconnected:', socket.id);
         }
     });
 });
