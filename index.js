@@ -16,6 +16,7 @@ app.get('*', (req, res) => {
 });
 
 let players = {};
+let playerCount = 0;
 let ball = {
     x: 400,
     y: 200,
@@ -26,12 +27,13 @@ let ball = {
 io.on('connection', (socket) => {
     console.log('A player connected:', socket.id);
 
-    if (Object.keys(players).length < 2) {
-        const playerNumber = Object.keys(players).length + 1;
-        players[socket.id] = { y: 200, playerNumber }; // Initial paddle position
+    if (playerCount < 2) {
+        playerCount++;
+        const playerNumber = playerCount;
+        players[socket.id] = { y: 200, playerNumber };
         socket.emit('playerNumber', playerNumber);
         
-        if (Object.keys(players).length === 2) {
+        if (playerCount === 2) {
             io.emit('gameStart');
         }
     } else {
@@ -44,9 +46,12 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        delete players[socket.id];
-        io.emit('playerLeft', socket.id);
-        console.log('A player disconnected:', socket.id);
+        if (players[socket.id]) {
+            playerCount--;
+            delete players[socket.id];
+            io.emit('playerLeft', socket.id);
+            console.log('A player disconnected:', socket.id);
+        }
     });
 });
 
