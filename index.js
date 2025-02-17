@@ -27,8 +27,13 @@ io.on('connection', (socket) => {
     console.log('A player connected:', socket.id);
 
     if (Object.keys(players).length < 2) {
-        players[socket.id] = { y: 200 }; // Initial paddle position
-        socket.emit('playerNumber', Object.keys(players).length);
+        const playerNumber = Object.keys(players).length + 1;
+        players[socket.id] = { y: 200, playerNumber }; // Initial paddle position
+        socket.emit('playerNumber', playerNumber);
+        
+        if (Object.keys(players).length === 2) {
+            io.emit('gameStart');
+        }
     } else {
         socket.emit('roomFull');
     }

@@ -32,7 +32,19 @@ socket.on('ballUpdate', (newBall) => {
 
 socket.on('playerNumber', (num) => {
     playerNumber = num;
-    playerInfo.textContent = `You are Player ${playerNumber}`;
+    playerInfo.textContent = `You are Player ${playerNumber}. Waiting for opponent...`;
+});
+
+socket.on('roomFull', () => {
+    playerInfo.textContent = 'Game room is full! Please try again later.';
+});
+
+socket.on('connect', () => {
+    playerInfo.textContent = 'Connected! Waiting for game assignment...';
+});
+
+socket.on('disconnect', () => {
+    playerInfo.textContent = 'Disconnected from server. Please refresh.';
 });
 
 socket.on('updatePaddle', (data) => {
