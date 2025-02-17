@@ -17,13 +17,22 @@ app.get('*', (req, res) => {
 
 let players = new Map();
 let playerCount = 0;
+
+function resetBall(direction) {
+    ball.x = 400;
+    ball.y = 200;
+    ball.dx = ball.speed * (direction === 1 ? 1 : -1);
+    ball.dy = ball.speed * (Math.random() * 0.5 + 0.5) * (Math.random() > 0.5 ? 1 : -1);
+}
+
 let playerNumbers = new Set();
 let ball = {
     x: 400,
     y: 200,
-    dx: 5,
-    dy: 5,
-    speed: 5
+    dx: 7,
+    dy: 7,
+    speed: 7,
+    radius: 10
 };
 
 let scores = {
@@ -47,17 +56,19 @@ function updateBall() {
             const paddleWidth = 20;
             const paddleHeight = 60;
             
-            if (player.playerNumber === 1 && ball.x <= paddleWidth * 2) {
+            if (player.playerNumber === 1 && ball.x - ball.radius <= paddleWidth * 2) {
                 if (ball.y >= player.y && ball.y <= player.y + paddleHeight) {
-                    ball.dx *= -1;
-                    ball.x = paddleWidth * 2;
+                    ball.dx = Math.abs(ball.dx);
+                    ball.dy += (ball.y - (player.y + paddleHeight/2)) * 0.1;
+                    ball.x = paddleWidth * 2 + ball.radius;
                 }
             }
             
-            if (player.playerNumber === 2 && ball.x >= 780) {
+            if (player.playerNumber === 2 && ball.x + ball.radius >= 780) {
                 if (ball.y >= player.y && ball.y <= player.y + paddleHeight) {
-                    ball.dx *= -1;
-                    ball.x = 780;
+                    ball.dx = -Math.abs(ball.dx);
+                    ball.dy += (ball.y - (player.y + paddleHeight/2)) * 0.1;
+                    ball.x = 780 - ball.radius;
                 }
             }
         });
@@ -66,10 +77,7 @@ function updateBall() {
         if (ball.x < -10) {  // Ball passes left boundary completely
             scores[2]++;
             io.emit('updateScore', scores);
-            ball.x = 400;
-            ball.y = 200;
-            ball.dx = ball.speed;
-            ball.dy = ball.speed * (Math.random() > 0.5 ? 1 : -1);
+            resetBall(1);
         } else if (ball.x > 810) {  // Ball passes right boundary completely
             scores[1]++;
             io.emit('updateScore', scores);
