@@ -35,6 +35,16 @@ socket.on('playerNumber', (num) => {
     playerInfo.textContent = `You are Player ${playerNumber}. Waiting for opponent...`;
 });
 
+socket.on('playerCount', (count) => {
+    if (count === 1) {
+        playerInfo.textContent = `You are Player ${playerNumber}. Waiting for opponent...`;
+    }
+});
+
+socket.on('gameStart', () => {
+    playerInfo.textContent = `Game Started! You are Player ${playerNumber}`;
+});
+
 socket.on('roomFull', () => {
     playerInfo.textContent = 'Game room is full! Please try again later.';
 });

@@ -28,24 +28,30 @@ let ball = {
 io.on('connection', (socket) => {
     console.log('A player connected:', socket.id);
 
-    if (playerCount < 2) {
-        let playerNumber = 1;
-        if (playerNumbers.has(1)) {
-            playerNumber = 2;
-        }
-        playerNumbers.add(playerNumber);
-        playerCount++;
-        
-        players.set(socket.id, { y: 200, playerNumber });
-        socket.emit('playerNumber', playerNumber);
-        
-        console.log(`Assigned player ${playerNumber} to ${socket.id}`);
-        
-        if (playerCount === 2) {
-            io.emit('gameStart');
-        }
-    } else {
+    // Check if game is already in progress
+    if (playerCount === 2) {
         socket.emit('roomFull');
+        return;
+    }
+
+    // Assign player number
+    let playerNumber = 1;
+    if (playerNumbers.has(1)) {
+        playerNumber = 2;
+    }
+    playerNumbers.add(playerNumber);
+    playerCount++;
+    
+    players.set(socket.id, { y: 200, playerNumber });
+    
+    // Emit player number and current game state
+    socket.emit('playerNumber', playerNumber);
+    io.emit('playerCount', playerCount);
+    
+    console.log(`Assigned player ${playerNumber} to ${socket.id}`);
+    
+    if (playerCount === 2) {
+        io.emit('gameStart');
     }
 
     socket.on('updatePaddle', (data) => {
