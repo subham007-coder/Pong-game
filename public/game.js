@@ -85,6 +85,13 @@ socket.on('playerLeft', (id) => {
     paddles[id] = { y: canvas.height / 2 };
 });
 
+// Add to existing socket events to track usernames
+let playerNames = { 1: 'Player 1', 2: 'Player 2' };
+
+socket.on('playerNames', (names) => {
+    playerNames = names;
+});
+
 // Add after existing socket events
 
 const chatForm = document.getElementById('chatForm');
@@ -179,6 +186,25 @@ function draw() {
     
     // Right paddle (Player 2)
     ctx.fillRect(GAME_WIDTH - paddleWidth * 2, paddles[2]?.y || GAME_HEIGHT/2, paddleWidth, paddleHeight);
+    
+    // After drawing paddles, add player names
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'white';
+    
+    // Player 1 name (left)
+    ctx.fillText(
+        playerNames[1], 
+        paddleWidth * 1.5, 
+        paddles[1]?.y - 10 || GAME_HEIGHT/2 - 10
+    );
+    
+    // Player 2 name (right)
+    ctx.fillText(
+        playerNames[2], 
+        GAME_WIDTH - paddleWidth * 1.5, 
+        paddles[2]?.y - 10 || GAME_HEIGHT/2 - 10
+    );
     
     ctx.restore();
 }

@@ -27,8 +27,13 @@ let playerCount = 0;
 function resetBall(direction) {
     ball.x = 400;
     ball.y = 200;
-    ball.dx = ball.speed * (direction === 1 ? 1 : -1);
-    ball.dy = ball.speed * (Math.random() * 0.5 + 0.5) * (Math.random() > 0.5 ? 1 : -1);
+    ball.speed = 7;  // Reset to initial speed
+    ball.spin = 0;   // Reset spin
+    
+    // Randomize initial angle between -45 and 45 degrees
+    const angle = (Math.random() * 90 - 45) * Math.PI / 180;
+    ball.dx = ball.speed * Math.cos(angle) * (direction === 1 ? 1 : -1);
+    ball.dy = ball.speed * Math.sin(angle);
 }
 
 let playerNumbers = new Set();
@@ -38,8 +43,11 @@ let ball = {
     dx: 7,
     dy: 7,
     speed: 7,
+    maxSpeed: 15,      // Maximum ball speed
+    speedIncrease: 0.2, // Speed increase after each paddle hit
     radius: 10,
-    active: false // Add active state
+    active: false,
+    spin: 0           // Add spin effect
 };
 
 let scores = {
@@ -48,14 +56,23 @@ let scores = {
 };
 
 function updateBall() {
-    if (playerCount === 2 && ball.active) {  // Check if ball is active
+    if (playerCount === 2 && ball.active) {
+        // Apply spin effect
+        ball.dy += ball.spin;
+        
         // Move ball
         ball.x += ball.dx;
         ball.y += ball.dy;
 
         // Ball collision with top and bottom
-        if (ball.y <= 0 || ball.y >= 400) {
-            ball.dy *= -1;
+        if (ball.y - ball.radius <= 0) {
+            ball.y = ball.radius;
+            ball.dy = Math.abs(ball.dy) * 0.9; // Reduce bounce speed slightly
+            ball.spin *= 0.5; // Reduce spin on bounce
+        } else if (ball.y + ball.radius >= 400) {
+            ball.y = 400 - ball.radius;
+            ball.dy = -Math.abs(ball.dy) * 0.9;
+            ball.spin *= 0.5;
         }
 
         // Ball collision with paddles
@@ -63,35 +80,57 @@ function updateBall() {
             const paddleWidth = 20;
             const paddleHeight = 60;
             
-            if (player.playerNumber === 1 && ball.x - ball.radius <= paddleWidth * 2) {
+            // Left paddle collision
+            if (player.playerNumber === 1 && 
+                ball.x - ball.radius <= paddleWidth * 2 && 
+                ball.x + ball.radius >= paddleWidth) {
                 if (ball.y >= player.y && ball.y <= player.y + paddleHeight) {
-                    ball.dx = Math.abs(ball.dx);
-                    ball.dy += (ball.y - (player.y + paddleHeight/2)) * 0.1;
+                    // Calculate relative impact point (-1 to 1)
+                    const impact = (ball.y - (player.y + paddleHeight/2)) / (paddleHeight/2);
+                    
+                    // Increase speed slightly with each hit
+                    ball.speed = Math.min(ball.speed + ball.speedIncrease, ball.maxSpeed);
+                    
+                    // Calculate new angle based on impact point
+                    const angle = impact * Math.PI/3; // Max 60 degree deflection
+                    ball.dx = Math.cos(angle) * ball.speed;
+                    ball.dy = Math.sin(angle) * ball.speed;
+                    
+                    // Add spin based on impact point
+                    ball.spin = impact * 0.2;
+                    
                     ball.x = paddleWidth * 2 + ball.radius;
                 }
             }
             
-            if (player.playerNumber === 2 && ball.x + ball.radius >= 780) {
+            // Right paddle collision (similar logic)
+            if (player.playerNumber === 2 && 
+                ball.x + ball.radius >= 780 - paddleWidth && 
+                ball.x - ball.radius <= 780) {
                 if (ball.y >= player.y && ball.y <= player.y + paddleHeight) {
-                    ball.dx = -Math.abs(ball.dx);
-                    ball.dy += (ball.y - (player.y + paddleHeight/2)) * 0.1;
-                    ball.x = 780 - ball.radius;
+                    const impact = (ball.y - (player.y + paddleHeight/2)) / (paddleHeight/2);
+                    ball.speed = Math.min(ball.speed + ball.speedIncrease, ball.maxSpeed);
+                    
+                    const angle = impact * Math.PI/3;
+                    ball.dx = -Math.cos(angle) * ball.speed;
+                    ball.dy = Math.sin(angle) * ball.speed;
+                    
+                    ball.spin = impact * 0.2;
+                    
+                    ball.x = 780 - paddleWidth - ball.radius;
                 }
             }
         });
 
-        // Score points only when ball passes completely behind paddles
-        if (ball.x < -10) {  // Ball passes left boundary completely
+        // Score points
+        if (ball.x < -10) {
             scores[2]++;
             io.emit('updateScore', scores);
             resetBall(1);
-        } else if (ball.x > 810) {  // Ball passes right boundary completely
+        } else if (ball.x > 810) {
             scores[1]++;
             io.emit('updateScore', scores);
-            ball.x = 400;
-            ball.y = 200;
-            ball.dx = -ball.speed;
-            ball.dy = ball.speed * (Math.random() > 0.5 ? 1 : -1);
+            resetBall(-1);
         }
 
         // Broadcast ball position
@@ -154,6 +193,15 @@ io.on('connection', (socket) => {
         const player = players.get(socket.id);
         if (player) {
             player.username = username;
+            
+            // Create object with current player names
+            const playerNames = {};
+            players.forEach((p) => {
+                playerNames[p.playerNumber] = p.username;
+            });
+            
+            // Broadcast updated player names to all clients
+            io.emit('playerNames', playerNames);
         }
     });
 
@@ -186,6 +234,13 @@ io.on('connection', (socket) => {
                 scores,
                 playerCount
             });
+            
+            // Broadcast updated player names
+            const playerNames = {};
+            players.forEach((p) => {
+                playerNames[p.playerNumber] = p.username;
+            });
+            io.emit('playerNames', playerNames);
             
             console.log('Player', player.playerNumber, 'disconnected:', socket.id);
         }
