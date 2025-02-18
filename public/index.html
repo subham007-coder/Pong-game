@@ -1,192 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>Pong Multiplayer</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            background: #1a1a1a;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
-            touch-action: none;
-            overflow: hidden;
-            font-family: 'Arial', sans-serif;
-            padding-top: 50px;  /* Add top padding */
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        #gameCanvas {
-            background: #000;
-            border: 3px solid #333;
-            border-radius: 10px;
-            max-width: 95%;
-            max-height: 80vh;  /* Reduce max height */
-            object-fit: contain;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-            margin-top: 35px;  /* Add top margin */
-        }
+      body {
+        background: #1a1a1a;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        height: 100vh;
+        width: 100vw;
+        touch-action: none;
+        overflow: hidden;
+        font-family: "Arial", sans-serif;
+        padding-top: 50px; /* Add top padding */
+      }
 
-        #playerInfo {
-            position: fixed;
-            top: 10px;  /* Reduced from 20px */
-            left: 50%;
-            transform: translateX(-50%);
-            color: #fff;
-            font-size: 18px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px 20px;
-            border-radius: 20px;
-            border: 1px solid #333;
-            z-index: 100;
-        }
-        
-        #chatBox {
-            position: fixed;
-            right: 20px;
-            bottom: 60px;
-            width: 290px;
-            background: rgba(0, 0, 0, 0.85);
-            border: 2px solid #333;
-            border-radius: 10px;
-            color: white;
-            padding: 15px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-        }
-        
-        #messages {
-            height: 180px;
-            overflow-y: auto;
-            margin-bottom: 12px;
-            font-size: 14px;
-            padding: 5px;
-        }
-        
-        #chatForm {
-            display: flex;
-            gap: 8px;
-        }
-        
-        #messageInput {
-            flex: 1;
-            padding: 8px 12px;
-            background: #222;
-            border: 1px solid #444;
-            border-radius: 15px;
-            color: white;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-        
-        #messageInput:focus {
-            outline: none;
-            border-color: #666;
-            background: #2a2a2a;
-        }
-        
-        #sendButton {
-            padding: 8px 15px;
-            background: #2c3e50;
-            border: none;
-            border-radius: 15px;
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        #sendButton:hover {
-            background: #34495e;
-            transform: translateY(-1px);
-        }
+      #gameCanvas {
+        background: #000;
+        border: 3px solid #333;
+        border-radius: 10px;
+        max-width: 95%;
+        max-height: 80vh; /* Reduce max height */
+        object-fit: contain;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        margin-top: 35px; /* Add top margin */
+      }
 
-        #messages .message {
-            margin: 8px 0;
-            padding: 8px 12px;
-            border-radius: 15px;
-            max-width: 85%;
-            word-wrap: break-word;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        #messages .message.player1 {
-            background: #2c3e50;
-            margin-right: auto;
-            text-align: left;
-        }
-        
-        #messages .message.player2 {
-            background: #34495e;
-            margin-left: auto;
-            text-align: right;
-        }
-        
-        #messages .system-message {
-            text-align: center;
-            color: #888;
-            font-style: italic;
-            margin: 8px 0;
-            font-size: 12px;
-        }
+      #playerInfo {
+        position: fixed;
+        top: 10px; /* Reduced from 20px */
+        left: 50%;
+        transform: translateX(-50%);
+        color: #fff;
+        font-size: 18px;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 10px 20px;
+        border-radius: 20px;
+        border: 1px solid #333;
+        z-index: 100;
+      }
 
-        .developer-info {
-            position: fixed;
-            bottom: 15px;
-            left: 20px;
-            color: #888;
-            font-size: 13px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 8px 15px;
-            border-radius: 20px;
-            border: 1px solid #333;
-            transition: all 0.3s ease;
-        }
+      #chatBox {
+        position: fixed;
+        right: 20px;
+        bottom: 60px;
+        width: 290px;
+        background: rgba(0, 0, 0, 0.85);
+        border: 2px solid #333;
+        border-radius: 10px;
+        color: white;
+        padding: 15px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      }
 
-        .developer-info:hover {
-            color: #fff;
-            background: rgba(0, 0, 0, 0.9);
-        }
+      #messages {
+        height: 180px;
+        overflow-y: auto;
+        margin-bottom: 12px;
+        font-size: 14px;
+        padding: 5px;
+      }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+      #chatForm {
+        display: flex;
+        gap: 8px;
+      }
 
-        /* Custom Scrollbar */
-        #messages::-webkit-scrollbar {
-            width: 6px;
-        }
+      #messageInput {
+        flex: 1;
+        padding: 8px 12px;
+        background: #222;
+        border: 1px solid #444;
+        border-radius: 15px;
+        color: white;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
 
-        #messages::-webkit-scrollbar-track {
-            background: #1a1a1a;
-        }
+      #messageInput:focus {
+        outline: none;
+        border-color: #666;
+        background: #2a2a2a;
+      }
 
-        #messages::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 3px;
-        }
+      #sendButton {
+        padding: 8px 15px;
+        background: #2c3e50;
+        border: none;
+        border-radius: 15px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
 
-        #messages::-webkit-scrollbar-thumb:hover {
-            background: #444;
+      #sendButton:hover {
+        background: #34495e;
+        transform: translateY(-1px);
+      }
+
+      #messages .message {
+        margin: 8px 0;
+        padding: 8px 12px;
+        border-radius: 15px;
+        max-width: 85%;
+        word-wrap: break-word;
+        animation: fadeIn 0.3s ease;
+      }
+
+      #messages .message.player1 {
+        background: #2c3e50;
+        margin-right: auto;
+        text-align: left;
+      }
+
+      #messages .message.player2 {
+        background: #34495e;
+        margin-left: auto;
+        text-align: right;
+      }
+
+      #messages .system-message {
+        text-align: center;
+        color: #888;
+        font-style: italic;
+        margin: 8px 0;
+        font-size: 12px;
+      }
+
+      .developer-info {
+        position: fixed;
+        bottom: 15px;
+        left: 20px;
+        color: #888;
+        font-size: 13px;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 8px 15px;
+        border-radius: 20px;
+        border: 1px solid #333;
+        transition: all 0.3s ease;
+      }
+
+      .developer-info:hover {
+        color: #fff;
+        background: rgba(0, 0, 0, 0.9);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(5px);
         }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Custom Scrollbar */
+      #messages::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #messages::-webkit-scrollbar-track {
+        background: #1a1a1a;
+      }
+
+      #messages::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 3px;
+      }
+
+      #messages::-webkit-scrollbar-thumb:hover {
+        background: #444;
+      }
     </style>
     <script src="/socket.io/socket.io.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <div id="playerInfo">Connecting...</div>
     <canvas id="gameCanvas"></canvas>
     <div id="chatBox">
-        <div id="messages"></div>
-        <form id="chatForm">
-            <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
-            <button type="submit" id="sendButton">Send</button>
-        </form>
+      <div id="messages"></div>
+      <form id="chatForm">
+        <input
+          type="text"
+          id="messageInput"
+          placeholder="Type a message..."
+          autocomplete="off"
+        />
+        <button type="submit" id="sendButton">Send</button>
+      </form>
     </div>
     <div class="developer-info">Developed by Subham Das🧑🏻‍💻</div>
     <script src="game.js"></script>
-</body>
+  </body>
 </html>
